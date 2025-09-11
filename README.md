@@ -4,7 +4,7 @@
     </a>
 </h2>
 <h2 align="center">
-    PLATFORM ERP
+    Quản lý sách – thư viện qua mạng
 </h2>
 <div align="center">
     <p align="center">
