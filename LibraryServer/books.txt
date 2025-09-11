@@ -1,0 +1,21 @@
+Things Fall Apart|Chinua Achebe|Tiểu thuyết hậu thuộc địa|22|NguyenVanAn,DuyManh
+The Kite Runner|Khaled Hosseini|Tiểu thuyết hiện đại|14|NguyenVanAn,DuyManh
+The Shadow of the Wind|Carlos Ruiz Zafón|Bí ẩn|13|
+Half of a Yellow Sun|Chimamanda Ngozi Adichie|Tiểu thuyết chiến tranh|23|
+To Kill a Mockingbird|Harper Lee|Tiểu thuyết xã hội|21|
+Lão Hạc|Nam Cao|Hiện thực|10|
+Crime and Punishment|Fyodor Dostoevsky|Tâm lý xã hội|30|
+The God of Small Things|Arundhati Roy|Tiểu thuyết gia đình|15|
+The Little Prince|Antoine de Saint-Exupéry|Tiểu thuyết thiếu nhi|35|
+One Hundred Years of Solitude|Gabriel García Márquez|Hiện thực huyền ảo|19|
+Pride and Prejudice|Jane Austen|Lãng mạn|17|
+A Thousand Splendid Suns|Khaled Hosseini|Tiểu thuyết gia đình|16|
+Beloved|Toni Morrison|Tiểu thuyết lịch sử|24|
+The Name of the Rose|Umberto Eco|Tiểu thuyết lịch sử|11|
+Norwegian Wood|Haruki Murakami|Tình cảm|28|
+Love|Osho|Tâm lý|10|
+The Alchemist|Paulo Coelho|Tiểu thuyết giả tưởng|20|
+Cội rễ|Alex Haley|Tiểu thuyết lịch sử|25|
+The Tale of Genji|Murasaki Shikibu|Tiểu thuyết cổ điển|12|
+Cien años de soledad|Gabriel García Márquez|Hiện thực huyền ảo|18|
+The Book Thief|Markus Zusak|Tiểu thuyết lịch sử|26|

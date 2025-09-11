@@ -1,0 +1,10 @@
+package util;
+
+public class Config {
+    public static final int SERVER_PORT = 1234;
+    public static final String SERVER_HOST = "127.0.0.1";
+
+    // ⚠️ Dùng đường dẫn tuyệt đối hoặc để trong cùng project server
+    public static final String USERS_FILE = "users.txt";
+    public static final String BOOKS_FILE = "books.txt";
+}
