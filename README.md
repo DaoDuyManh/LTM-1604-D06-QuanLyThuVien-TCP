@@ -18,3 +18,44 @@
 [![DaiNam University](https://img.shields.io/badge/DaiNam%20University-orange?style=for-the-badge)](https://dainam.edu.vn)
 
 </div>
+
+## 📖 1. Giới thiệu hệ thống
+.
+.
+.
+.
+.
+.
+chờ update
+## 🔧 2. Các công nghệ được sử dụng
+.
+.
+.
+.
+.
+.
+chờ update
+## 3.một số hình ảnh
+.
+.
+.
+.
+.
+.
+chờ update
+## 4. các bước cài đặt
+.
+.
+.
+.
+.
+.
+chờ update
+## 5. Liên hệ(cá nhân)
+.
+.
+.
+.
+.
+.
+chờ update
