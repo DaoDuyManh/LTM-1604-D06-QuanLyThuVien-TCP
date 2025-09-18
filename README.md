@@ -25,7 +25,7 @@
 ## 📖 1. Giới thiệu hệ thống
 Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựng theo mô hình **client-server** nhằm:
 - Hỗ trợ người dùng đăng ký, đăng nhập, mượn và trả sách trực tuyến.
-- Cho phép quản trị viên (Admin) theo dõi, cập nhật thông tin sách, số lượng, và trạng thái mượn.
+- Cho phép quản trị viên (Admin) theo dõi, cập nhật thông tin sách, số lượng và trạng thái mượn.
 - Cung cấp giao diện đơn giản nhưng đầy đủ tính năng, phục vụ nhu cầu học tập, nghiên cứu và quản lý thư viện nhỏ.
 
 ✨ Các chức năng chính:
@@ -34,7 +34,7 @@ Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựn
 - **Client**: tìm kiếm, xem danh sách sách, mượn/trả sách.
 - **Lưu trữ**: dữ liệu được lưu trữ trong các file `.txt`, thuận tiện cho cài đặt và thử nghiệm.
 
-🎯 Mục tiêu hệ thống
+🎯 Mục tiêu hệ thống:
 - Số hóa quản lý thư viện: thay thế phương pháp quản lý thủ công bằng một hệ thống trực tuyến, dễ sử dụng và hiện đại.
 - Tối ưu trải nghiệm người dùng: hỗ trợ tìm kiếm nhanh, hiển thị trạng thái sách, theo dõi số lượng còn lại.
 - Hỗ trợ quản trị viên (Admin): dễ dàng cập nhật thông tin sách, quản lý người dùng, giám sát hoạt động mượn – trả.
@@ -46,8 +46,8 @@ Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựn
 - **Giao diện:** Java Swing
 - **Giao thức mạng:** Socket TCP/IP 
 - **Lưu trữ:** File text (txt)
-- **Môi trường phát triển**: Eclipse IDE
-- **Hệ điều hành**: Windows
+- **Môi trường phát triển:** Eclipse IDE
+- **Hệ điều hành:** Windows
 
 <div align="center">
 
@@ -62,25 +62,25 @@ Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựn
 
 ---
 
-## 3.một số hình ảnh
+## 📷 3. Một số hình ảnh
 .
 .
 .
 .
 .
 .
-chờ update
+Chờ update
 
 ---
 
-## 4. các bước cài đặt
+## ⚙️ 4. Các bước cài đặt
 .
 .
 .
 .
 .
 .
-chờ update
+Chờ update
 
 ---
 
@@ -88,6 +88,6 @@ chờ update
 Nếu bạn cần trao đổi thêm hoặc muốn phát triển mở rộng hệ thống, vui lòng liên hệ:  
 
 - 👨‍💻 **Tác giả:** Đào Duy Mạnh  
-- 📧 **Email:** Manh12088@gmai.com  
+- 📧 **Email:** Manh12088@gmail.com  
 - 📱 **SĐT:** 0837628866  
 - 🌐 **GitHub:** [github.com/DaoDuyManh](https://github.com/DaoDuyManh)  
