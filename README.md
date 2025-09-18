@@ -63,21 +63,86 @@ Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựn
 ---
 
 ## 📷 3. Một số hình ảnh
- <p align="center">
- <img src="docs/1.jpg" alt="1"/>
- <img src="docs/2.jpg" alt="2"/>
- <img src="docs/3.jpg" alt="3"/>
- <img src="docs/4.jpg" alt="4"/>
- </p>
+<p align="center">
+<p align="center">
+  <img src="docs/1.jpg" alt="1" width="800"/><br/>
+  <i>Hình 1: Giao diện thư viện phía người dùng</i>
+</p>
+<br/>
+<p align="center">
+  <img src="docs/2.jpg" alt="2" width="800"/><br/>
+  <i>Hình 2: Danh sách sách đang được người dùng mượn</i>
+</p>
+<br/>
+<p align="center">
+  <img src="docs/3.jpg" alt="3" width="800"/><br/>
+  <i>Hình 3: Giao diện quản lý người dùng của Admin</i>
+</p>
+<br/>
+<p align="center">
+  <img src="docs/4.jpg" alt="4" width="800"/><br/>
+  <i>Hình 4: Giao diện quản lý sách của Admin</i>
+</p>
+</p>
+
 ---
-## ⚙️ 4. Các bước cài đặt
-.
-.
-.
-.
-.
-.
-Chờ update
+## ⚙️ 4. Các bước cài đặt & sử dụng
+
+### 1️⃣ Chuẩn bị môi trường
+- Cài đặt **Java JDK 8+** → [Tải tại đây](https://www.oracle.com/java/technologies/javase-downloads.html)  
+- Cài đặt **Eclipse IDE** .  
+- Hệ điều hành: **Windows 10/11**.  
+
+### 2️⃣ Tải source code
+- Clone dự án từ GitHub:  
+git clone [https://github.com/DaoDuyManh/LibraryManagementSystem.git](https://github.com/DaoDuyManh/LTM-1604-D06-QuanLyThuVien-TCP.git)
+- Hoặc tải file `.zip` → giải nén.  
+
+### 3️⃣ Import dự án vào IDE
+- Mở **Eclipse IDE** → `File` → `Import` → `Existing Projects into Workspace`.  
+- Chọn thư mục dự án vừa tải về.  
+- Kiểm tra `Project → Properties → Java Build Path` để chắc chắn JDK đã được cấu hình đúng.  
+
+### 4️⃣ Cấu trúc file dữ liệu
+- **accounts.txt** → lưu thông tin người dùng theo định dạng:  
+  username|password|phone|address|email
+- **books.txt** → lưu thông tin sách:  
+  title|author|category|quantity|borrower1,borrower2,...
+
+> 📌 Lưu ý: 2 file này được server đọc & ghi trực tiếp. Khi mượn/trả sách, dữ liệu sẽ tự động cập nhật.
+
+### 5️⃣ Chạy chương trình
+- **Khởi động Server**  
+  - Mở file `ServerMain.java` → Run.  
+  - Server sẽ hiển thị log kết nối và quản lý dữ liệu sách + người dùng.  
+
+- **Khởi động Client**  
+  - Mở file `MainUI.java` → Run.  
+  - Cửa sổ giao diện hiện ra cho phép đăng nhập, tìm kiếm, mượn & trả sách từ xa.  
+
+### 6️⃣ Đăng nhập / Đăng ký
+- **Đăng nhập**: Sử dụng tài khoản có sẵn trong `accounts.txt`.  
+- **Đăng ký**: Nhấn nút **Đăng ký** trên Client để tạo tài khoản mới.  
+
+### 7️⃣ Thao tác chính trên hệ thống
+- **Tìm kiếm sách** → nhập tên/tác giả/thể loại.  
+- **Mượn sách** → chọn sách → nhấn **📗 Mượn**.  
+- **Trả sách** → sang tab "Sách đã mượn" → chọn sách → nhấn **📕 Trả**.  
+- **Xem danh sách** → có 2 tab:  
+  - `📚 Tất cả sách`: hiển thị số lượng tồn kho.  
+  - `📖 Sách đã mượn`: hiển thị các sách bạn đã mượn.  
+
+### 8️⃣ Tài khoản demo (mặc định)
+Ví dụ trong `accounts.txt`:  
+DuyManh|DuyManh|0837628866|Đồng Mai - Hà Đông - Hà Nội|manh12088@gmail.com
+
+### 9️⃣ Kết thúc phiên làm việc
+- Đóng cửa sổ **Client** để thoát.  
+- Dừng **Server** (Stop trong Eclipse) → dữ liệu đã được lưu lại vào file.  
+
+
+✅ Sau khi hoàn tất các bước trên, bạn đã có thể sử dụng hệ thống **Quản lý thư viện trực tuyến** với đầy đủ tính năng đăng nhập, tìm kiếm, mượn & trả sách qua mạng TCP/IP.
+
 
 ---
 
