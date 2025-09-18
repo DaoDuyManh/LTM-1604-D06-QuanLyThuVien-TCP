@@ -63,16 +63,13 @@ Hệ thống **Quản lý sách – thư viện qua mạng** được xây dựn
 ---
 
 ## 📷 3. Một số hình ảnh
-.
-.
-.
-.
-.
-.
-Chờ update
-
+ <p align="center">
+ <img src="docs/1.jpg" alt="1"/>
+ <img src="docs/2.jpg" alt="2"/>
+ <img src="docs/3.jpg" alt="3"/>
+ <img src="docs/4.jpg" alt="4"/>
+ </p>
 ---
-
 ## ⚙️ 4. Các bước cài đặt
 .
 .
