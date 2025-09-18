@@ -4,7 +4,7 @@
     </a>
 </h2>
 <h2 align="center">
-    QUẢN LÝ SÁCH - THƯ VIỆN QUA MẠNG BẰNG GIAO THỨC TCP
+    QUẢN LÝ SÁCH - THƯ VIỆN QUA MẠNG BẰNG GIAO THỨC TCP/IP
 </h2>
 
 <div align="center">
