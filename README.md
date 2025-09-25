@@ -132,7 +132,7 @@ git clone [https://github.com/DaoDuyManh/LibraryManagementSystem.git](https://gi
   - `📚 Tất cả sách`: hiển thị số lượng tồn kho.  
   - `📖 Sách đã mượn`: hiển thị các sách bạn đã mượn.  
 
-### 8️⃣ Tài khoản demo (mặc định)
+### 8️⃣ Tài khoản demo
 Ví dụ trong `accounts.txt`:  
 DuyManh,DuyManh,0837628866,Đồng Mai - Hà Đông - Hà Nội,manh12088@gmail.com
 
