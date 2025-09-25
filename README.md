@@ -153,7 +153,6 @@ Nếu bạn cần trao đổi thêm hoặc muốn phát triển mở rộng hệ
 - 🎓 **Lớp:** CNTT 16-04  
 - 💻 **Khoa:** Công nghệ thông tin – Trường Đại học Đại Nam  
 - 📧 **Email:** Manh12088@gmail.com  
-- 📱 **SĐT:** 0837628866  
 - 🌐 **GitHub:** [github.com/DaoDuyManh](https://github.com/DaoDuyManh)  
 
 <br/>
