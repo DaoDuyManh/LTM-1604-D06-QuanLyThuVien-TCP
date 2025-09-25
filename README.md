@@ -151,7 +151,9 @@ Nếu bạn cần trao đổi thêm hoặc muốn phát triển mở rộng hệ
 
 - 👨‍💻 **Tác giả:** Đào Duy Mạnh  
 - 📧 **Email:** Manh12088@gmail.com  
-- 📱 **SĐT:** 0837628866  
+- 📱 **SĐT:** 0837628866
+- **Lớp: CNTT 16-04**
+- **Khoa Công nghệ thông tin – Trường Đại học Đại Nam**  
 - 🌐 **GitHub:** [github.com/DaoDuyManh](https://github.com/DaoDuyManh)  
 <br/>
 © 2025 AIoTLab, Faculty of Information Technology, DaiNam University. All rights reserved.
