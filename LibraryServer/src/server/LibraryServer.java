@@ -10,7 +10,6 @@ public class LibraryServer {
     public static void main(String[] args) {
         System.out.println("📚 Library Server khởi động...");
 
-        // Tạo CommandProcessor dùng chung cho toàn bộ server
         CommandProcessor processor = new CommandProcessor();
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -20,7 +19,6 @@ public class LibraryServer {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("🔗 Client kết nối: " + clientSocket.getRemoteSocketAddress());
 
-                // Truyền processor vào ClientHandler
                 new Thread(new ClientHandler(clientSocket, processor)).start();
             }
         } catch (IOException e) {

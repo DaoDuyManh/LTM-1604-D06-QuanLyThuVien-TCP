@@ -6,7 +6,7 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final CommandProcessor processor;
-    private String currentUser = null; // user đã login
+    private String currentUser = null;
 
     public ClientHandler(Socket socket, CommandProcessor processor) {
         this.socket = socket;
@@ -16,15 +16,15 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try (
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
         ) {
             String line;
             while ((line = in.readLine()) != null) {
                 line = line.trim();
-                System.out.println("📩 Client gửi: " + line);
+                System.out.println("📩 Received from " + socket.getInetAddress() + ": " + line);
 
-                // LOGIN đặc biệt → lưu currentUser
+             
                 if (line.startsWith("LOGIN")) {
                     String[] parts = line.split("[: ]", 3);
                     if (parts.length >= 3) {
@@ -39,12 +39,9 @@ public class ClientHandler implements Runnable {
                     }
                 }
 
-                // xử lý các lệnh khác
+        
                 String resp = processor.process(line, currentUser);
-                if (resp == null || resp.isEmpty()) {
-                    resp = "FAIL";
-                }
-
+                if (resp == null || resp.isEmpty()) resp = "FAIL";
                 out.println(resp.trim());
                 out.flush();
                 System.out.println("📤 Server trả: " + resp);

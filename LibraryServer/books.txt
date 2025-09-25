@@ -1,21 +1,30 @@
-Things Fall Apart|Chinua Achebe|Tiểu thuyết hậu thuộc địa|22|NguyenVanAn,DuyManh
-The Kite Runner|Khaled Hosseini|Tiểu thuyết hiện đại|14|NguyenVanAn,DuyManh
-The Shadow of the Wind|Carlos Ruiz Zafón|Bí ẩn|13|
-Half of a Yellow Sun|Chimamanda Ngozi Adichie|Tiểu thuyết chiến tranh|23|
-To Kill a Mockingbird|Harper Lee|Tiểu thuyết xã hội|21|
-Lão Hạc|Nam Cao|Hiện thực|10|
-Crime and Punishment|Fyodor Dostoevsky|Tâm lý xã hội|30|
-The God of Small Things|Arundhati Roy|Tiểu thuyết gia đình|15|
-The Little Prince|Antoine de Saint-Exupéry|Tiểu thuyết thiếu nhi|35|
-One Hundred Years of Solitude|Gabriel García Márquez|Hiện thực huyền ảo|19|
-Pride and Prejudice|Jane Austen|Lãng mạn|17|
-A Thousand Splendid Suns|Khaled Hosseini|Tiểu thuyết gia đình|16|
-Beloved|Toni Morrison|Tiểu thuyết lịch sử|24|
-The Name of the Rose|Umberto Eco|Tiểu thuyết lịch sử|11|
-Norwegian Wood|Haruki Murakami|Tình cảm|28|
-Love|Osho|Tâm lý|10|
-The Alchemist|Paulo Coelho|Tiểu thuyết giả tưởng|20|
-Cội rễ|Alex Haley|Tiểu thuyết lịch sử|25|
-The Tale of Genji|Murasaki Shikibu|Tiểu thuyết cổ điển|12|
-Cien años de soledad|Gabriel García Márquez|Hiện thực huyền ảo|18|
-The Book Thief|Markus Zusak|Tiểu thuyết lịch sử|26|
+Homo Deus|Yuval Noah Harari|Future Studies|7|a|
+The Great Adventure|John Smith|Adventure|8|user01|
+Design Patterns|Erich Gamma|Programming|7||
+The Silent Patient|Alex Michaelides|Thriller|7||
+Becoming|Michelle Obama|Biography|9||
+Digital Marketing|Kevin Lee|Business|3||
+Mindfulness Guide|Sophia Kim|Self-Help|5||
+The Intelligent Investor|Benjamin Graham|Finance|6||
+Fantasy Worlds|Emma Wilson|Fantasy|9||
+Space Exploration|Neil Armstrong|Science|6||
+Atomic Habits|James Clear|Self-Help|10||
+Modern Java|Alice Nguyen|Programming|5||
+Cooking 101|Maria Lopez|Cooking|7||
+The Alchemist|Paulo Coelho|Fiction|8||
+Grit|Angela Duckworth|Motivation|6||
+Zero to One|Peter Thiel|Startup|6||
+Gardening Tips|Robert Brown|Gardening|4||
+Rich Dad Poor Dad|Robert Kiyosaki|Finance|10||
+Deep Work|Cal Newport|Productivity|6||
+The 48 Laws of Power|Robert Greene|Strategy|5||
+Sapiens|Yuval Noah Harari|History|12||
+Clean Code|Robert C. Martin|Programming|8||
+Art of Photography|Liam Johnson|Art|2||
+Thinking Fast and Slow|Daniel Kahneman|Psychology|10||
+Can’t Hurt Me|David Goggins|Self-Help|8||
+The Lean Startup|Eric Ries|Business|9||
+Start with Why|Simon Sinek|Leadership|5||
+Principles|Ray Dalio|Business|7||
+Educated|Tara Westover|Memoir|5||
+History of Vietnam|Tran Van A|History|10||

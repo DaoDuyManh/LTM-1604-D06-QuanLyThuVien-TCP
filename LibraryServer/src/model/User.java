@@ -23,16 +23,17 @@ public class User {
 
     @Override
     public String toString() {
-        // Lưu dạng CSV
+        // Lưu 
         return username + "," + password + "," + phone + "," + address + "," + email;
     }
 
     public static User fromString(String line) {
         if (line == null || line.trim().isEmpty()) return null;
-        String[] parts = line.trim().split(",", -1); // giữ cả chuỗi rỗng
+        String[] parts = line.trim().split(",", -1); 
         if (parts.length == 5) {
             return new User(parts[0], parts[1], parts[2], parts[3], parts[4]);
         }
         return null;
     }
+    
 }
