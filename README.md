@@ -134,7 +134,7 @@ git clone [https://github.com/DaoDuyManh/LibraryManagementSystem.git](https://gi
 
 ### 8️⃣ Tài khoản demo (mặc định)
 Ví dụ trong `accounts.txt`:  
-DuyManh|DuyManh|0837628866|Đồng Mai - Hà Đông - Hà Nội|manh12088@gmail.com
+DuyManh,DuyManh,0837628866,Đồng Mai - Hà Đông - Hà Nội,manh12088@gmail.com
 
 ### 9️⃣ Kết thúc phiên làm việc
 - Đóng cửa sổ **Client** để thoát.  
