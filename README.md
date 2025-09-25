@@ -146,7 +146,7 @@ DuyManh,DuyManh,0837628866,Đồng Mai - Hà Đông - Hà Nội,manh12088@gmail.
 
 ---
 
-## ✉️ 5. Liên hệ (cá nhân)
+## ✉️ 5. Liên hệ cá nhân
 Nếu bạn cần trao đổi thêm hoặc muốn phát triển mở rộng hệ thống, vui lòng liên hệ:  
 
 - 👨‍💻 **Tác giả:** Đào Duy Mạnh  
