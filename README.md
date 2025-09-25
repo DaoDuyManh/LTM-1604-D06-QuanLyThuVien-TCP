@@ -155,6 +155,4 @@ Nếu bạn cần trao đổi thêm hoặc muốn phát triển mở rộng hệ
 - 📧 **Email:** Manh12088@gmail.com  
 - 🌐 **GitHub:** [github.com/DaoDuyManh](https://github.com/DaoDuyManh)  
 
-<br/>
-© 2025 AIoTLab, Faculty of Information Technology, DaiNam University. All rights reserved.
 
