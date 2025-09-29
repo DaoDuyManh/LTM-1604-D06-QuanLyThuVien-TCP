@@ -3,8 +3,10 @@ package ui;
 import client.ClientConnection;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.IOException;
 import java.text.ParseException;
@@ -30,151 +32,309 @@ public class MainUI extends JFrame {
     private final SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
+    // --- COLOR PALETTE (Đồng bộ với Login/Register) ---
+    private static final Color PRIMARY_BLUE = new Color(0, 123, 255); // Màu chủ đạo
+    private static final Color BACKGROUND_LIGHT = new Color(248, 249, 250); // Nền sáng
+    private static final Color FOREGROUND_DARK = new Color(33, 37, 41); // Chữ đen đậm
+    private static final Color HEADER_BG = PRIMARY_BLUE; // Nền Header Bảng
+    private static final Color TABLE_STRIPE = new Color(240, 245, 255); // Màu sọc ngựa vằn
+
+    // --- FONT STYLES ---
+    private static final Font MAIN_FONT = new Font("SansSerif", Font.PLAIN, 14);
+    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 14);
+    private static final Font BUTTON_FONT = new Font("SansSerif", Font.BOLD, 14);
+    private static final Font LABEL_FONT = new Font("SansSerif", Font.BOLD, 14);
+
+
     public MainUI(ClientConnection connection, String username) {
         this.connection = connection;
         this.username = username;
 
         setTitle("📚 Thư viện - Người dùng: " + username);
-        setSize(1000, 620);
+        setSize(1100, 680); // Tăng kích thước để thoáng hơn
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        getContentPane().setBackground(BACKGROUND_LIGHT);
 
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(HEADER_FONT);
 
         // ---------------- TAB 1: Tất cả sách ----------------
-        JPanel allPanel = new JPanel(new BorderLayout());
-        allBooksModel = new DefaultTableModel(
-                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Tổng", "Có sẵn"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-        };
-        allBooksTable = new JTable(allBooksModel);
-        styleTable(allBooksTable);
-
-        JPanel searchPane = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JTextField searchField = new JTextField(25);
-        JButton searchBtn = new JButton("🔍 Tìm");
-        JButton reloadBtn = new JButton("⟳ Tải lại");
-        searchPane.add(new JLabel("Tìm sách:"));
-        searchPane.add(searchField);
-        searchPane.add(searchBtn);
-        searchPane.add(reloadBtn);
-
-        allPanel.add(searchPane, BorderLayout.NORTH);
-        allPanel.add(new JScrollPane(allBooksTable), BorderLayout.CENTER);
-
-        JPanel actionPanel = new JPanel();
-        JButton borrowBtn = new JButton("📗 Mượn sách");
-        actionPanel.add(borrowBtn);
-        allPanel.add(actionPanel, BorderLayout.SOUTH);
-
+        // SỬ DỤNG PHƯƠNG THỨC XÂY DỰNG UI MỚI
+        JPanel allPanel = buildAllBooksPanel();
         tabbedPane.addTab("📚 Tất cả sách", allPanel);
+        allBooksTable = (JTable) ((JScrollPane) allPanel.getComponent(1)).getViewport().getView(); // Lấy lại JTable
+        allBooksModel = (DefaultTableModel) allBooksTable.getModel(); // Lấy lại Model
 
         // ---------------- TAB 2: Sách đã mượn ----------------
-        JPanel myPanel = new JPanel(new BorderLayout());
-        myBooksModel = new DefaultTableModel(
-                new Object[]{"Tên sách", "Tác giả", "Thể loại", "SL mượn", "Ngày mượn", "Ngày trả"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-        };
-        myBooksTable = new JTable(myBooksModel);
-        styleTable(myBooksTable);
-
-        JPanel myTop = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton reloadMyBtn = new JButton("⟳ Tải lại");
-        myTop.add(new JLabel("📖 Sách bạn đang mượn:"));
-        myTop.add(reloadMyBtn);
-
-        myPanel.add(myTop, BorderLayout.NORTH);
-        myPanel.add(new JScrollPane(myBooksTable), BorderLayout.CENTER);
-
-        JPanel myActionPanel = new JPanel();
-        JButton returnBtn = new JButton("📕 Trả sách");
-        myActionPanel.add(returnBtn);
-        myPanel.add(myActionPanel, BorderLayout.SOUTH);
-
+        // SỬ DỤNG PHƯƠNG THỨC XÂY DỰNG UI MỚI
+        JPanel myPanel = buildMyBooksPanel();
         tabbedPane.addTab("📖 Sách đã mượn", myPanel);
+        myBooksTable = (JTable) ((JScrollPane) myPanel.getComponent(1)).getViewport().getView();
+        myBooksModel = (DefaultTableModel) myBooksTable.getModel();
 
         // ---------------- TAB 3: Đang chờ duyệt ----------------
-        JPanel pendingPanel = new JPanel(new BorderLayout());
-        pendingModel = new DefaultTableModel(
-                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Ngày gửi yêu cầu", "Ngày trả"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-        };
-        pendingTable = new JTable(pendingModel);
-        styleTable(pendingTable);
-
-        JPanel pendingTop = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton reloadPendingBtn = new JButton("⟳ Tải lại");
-        pendingTop.add(new JLabel("📑 Sách đang chờ duyệt:"));
-        pendingTop.add(reloadPendingBtn);
-
-        pendingPanel.add(pendingTop, BorderLayout.NORTH);
-        pendingPanel.add(new JScrollPane(pendingTable), BorderLayout.CENTER);
-
+        // SỬ DỤNG PHƯƠNG THỨC XÂY DỰNG UI MỚI
+        JPanel pendingPanel = buildPendingPanel();
         tabbedPane.addTab("📑 Đang chờ duyệt", pendingPanel);
+        pendingTable = (JTable) ((JScrollPane) pendingPanel.getComponent(1)).getViewport().getView();
+        pendingModel = (DefaultTableModel) pendingTable.getModel();
 
         // ---------------- TAB 4: Lịch sử ----------------
-        JPanel historyPanel = new JPanel(new BorderLayout());
-        historyModel = new DefaultTableModel(
-                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Ngày mượn", "Ngày trả", "Trạng thái"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-        };
-        historyTable = new JTable(historyModel);
-        styleTable(historyTable);
-
-        JPanel historyTop = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton reloadHistoryBtn = new JButton("⟳ Tải lại");
-        historyTop.add(new JLabel("📜 Lịch sử mượn sách:"));
-        historyTop.add(reloadHistoryBtn);
-
-        historyPanel.add(historyTop, BorderLayout.NORTH);
-        historyPanel.add(new JScrollPane(historyTable), BorderLayout.CENTER);
-
+        // SỬ DỤNG PHƯƠNG THỨC XÂY DỰNG UI MỚI
+        JPanel historyPanel = buildHistoryPanel();
         tabbedPane.addTab("📜 Lịch sử", historyPanel);
+        historyTable = (JTable) ((JScrollPane) historyPanel.getComponent(1)).getViewport().getView();
+        historyModel = (DefaultTableModel) historyTable.getModel();
+
 
         add(tabbedPane);
 
-        // ---------------- Load dữ liệu ban đầu ----------------
+        // ---------------- Load dữ liệu ban đầu (Logic cũ) ----------------
         loadAllBooks();
         loadMyBooks();
         loadPendingBooks();
         loadHistory();
 
-        // ---------------- Sự kiện nút ----------------
+        // ---------------- Sự kiện nút (Logic cũ, được gán trong build*Panel) ----------------
+        // Các nút đã được gán sự kiện trong các phương thức build*Panel
+
+        setVisible(true);
+    }
+    
+    // --- UTILITY: Tạo Style cho Bảng (Cải tiến hàm gốc) ---
+    private void styleTable(JTable table) {
+        table.setRowHeight(30);
+        table.setFont(MAIN_FONT);
+        table.setBackground(Color.WHITE);
+        table.setForeground(FOREGROUND_DARK);
+        table.setGridColor(new Color(230, 230, 230));
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionBackground(new Color(200, 220, 255));
+        
+        // Header Style
+        JTableHeader header = table.getTableHeader();
+        header.setFont(HEADER_FONT);
+        header.setBackground(HEADER_BG); 
+        header.setForeground(Color.WHITE); // Màu chữ trắng
+        header.setPreferredSize(new Dimension(header.getWidth(), 38)); 
+        header.setReorderingAllowed(false);
+        
+        // Center Renderer
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++)
+            table.getColumnModel().getColumn(i).setCellRenderer(center);
+        
+        // Zebra Striping (Sọc ngựa vằn)
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : TABLE_STRIPE); 
+                }
+                c.setFont(MAIN_FONT);
+                return c;
+            }
+        });
+    }
+
+    // --- UTILITY: Tạo Style cho Nút ---
+    private void styleButton(JButton button, Color bgColor) {
+        button.setFont(BUTTON_FONT);
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE); 
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); 
+    }
+
+    // ----------------- PANELS BUILDER (Phần bị thay đổi để styling) -----------------
+
+    // --- TAB 1: Tất cả sách ---
+    private JPanel buildAllBooksPanel() {
+        JPanel allPanel = new JPanel(new BorderLayout());
+        allPanel.setBackground(BACKGROUND_LIGHT);
+        allPanel.setBorder(new EmptyBorder(15, 15, 15, 15)); // Padding cho Tab
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Tổng", "Có sẵn"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        styleTable(table);
+
+        // Panel Tìm kiếm và Tải lại
+        JPanel searchPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        searchPane.setBackground(BACKGROUND_LIGHT);
+        searchPane.setBorder(new EmptyBorder(0, 0, 10, 0));
+        
+        JTextField searchField = new JTextField(30);
+        searchField.setFont(MAIN_FONT);
+        searchField.setPreferredSize(new Dimension(300, 35));
+        
+        JButton searchBtn = new JButton("🔍 Tìm sách");
+        JButton reloadBtn = new JButton("⟳ Tải lại");
+        
+        styleButton(searchBtn, PRIMARY_BLUE);
+        styleButton(reloadBtn, new Color(108, 117, 125)); // Màu xám
+
+        JLabel searchLabel = new JLabel("Tìm kiếm:");
+        searchLabel.setFont(LABEL_FONT);
+        
+        searchPane.add(searchLabel);
+        searchPane.add(searchField);
+        searchPane.add(searchBtn);
+        searchPane.add(reloadBtn);
+
+        allPanel.add(searchPane, BorderLayout.NORTH);
+        allPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // Panel Action
+        JPanel actionPanel = new JPanel();
+        actionPanel.setBackground(BACKGROUND_LIGHT);
+        JButton borrowBtn = new JButton("📗 Yêu cầu Mượn sách");
+        styleButton(borrowBtn, new Color(40, 167, 69)); // Xanh lá
+        
+        actionPanel.add(borrowBtn);
+        allPanel.add(actionPanel, BorderLayout.SOUTH);
+
+        // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
         reloadBtn.addActionListener(e -> loadAllBooks());
-        reloadMyBtn.addActionListener(e -> loadMyBooks());
-        reloadPendingBtn.addActionListener(e -> loadPendingBooks());
-        reloadHistoryBtn.addActionListener(e -> loadHistory());
         searchBtn.addActionListener(e -> {
             String key = searchField.getText().trim();
             if (key.isEmpty()) loadAllBooks();
             else searchBooks(key);
         });
         borrowBtn.addActionListener(e -> borrowBook());
+
+        return allPanel;
+    }
+
+    // --- TAB 2: Sách đã mượn ---
+    private JPanel buildMyBooksPanel() {
+        JPanel myPanel = new JPanel(new BorderLayout());
+        myPanel.setBackground(BACKGROUND_LIGHT);
+        myPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"Tên sách", "Tác giả", "Thể loại", "SL mượn", "Ngày mượn", "Ngày trả dự kiến"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        styleTable(table);
+
+        JPanel myTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        myTop.setBackground(BACKGROUND_LIGHT);
+        myTop.setBorder(new EmptyBorder(0, 0, 10, 0));
+        
+        JButton reloadMyBtn = new JButton("⟳ Tải lại");
+        styleButton(reloadMyBtn, PRIMARY_BLUE);
+        
+        JLabel myLabel = new JLabel("📖 Sách bạn đang mượn:");
+        myLabel.setFont(LABEL_FONT);
+        
+        myTop.add(myLabel);
+        myTop.add(reloadMyBtn);
+
+        myPanel.add(myTop, BorderLayout.NORTH);
+        myPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JPanel myActionPanel = new JPanel();
+        myActionPanel.setBackground(BACKGROUND_LIGHT);
+        JButton returnBtn = new JButton("📕 Trả sách đã chọn");
+        styleButton(returnBtn, new Color(220, 53, 69)); // Đỏ
+        
+        myActionPanel.add(returnBtn);
+        myPanel.add(myActionPanel, BorderLayout.SOUTH);
+        
+        // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
+        reloadMyBtn.addActionListener(e -> loadMyBooks());
         returnBtn.addActionListener(e -> returnBook());
-
-        setVisible(true);
+        
+        return myPanel;
     }
 
-    private void styleTable(JTable table) {
-        table.setRowHeight(26);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < table.getColumnCount(); i++)
-            table.getColumnModel().getColumn(i).setCellRenderer(center);
+    // --- TAB 3: Đang chờ duyệt ---
+    private JPanel buildPendingPanel() {
+        JPanel pendingPanel = new JPanel(new BorderLayout());
+        pendingPanel.setBackground(BACKGROUND_LIGHT);
+        pendingPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Ngày gửi yêu cầu", "Ngày trả dự kiến"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        styleTable(table);
+
+        JPanel pendingTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        pendingTop.setBackground(BACKGROUND_LIGHT);
+        pendingTop.setBorder(new EmptyBorder(0, 0, 10, 0));
+        
+        JButton reloadPendingBtn = new JButton("⟳ Tải lại");
+        styleButton(reloadPendingBtn, PRIMARY_BLUE);
+        
+        JLabel pendingLabel = new JLabel("📑 Sách đang chờ admin duyệt:");
+        pendingLabel.setFont(LABEL_FONT);
+        
+        pendingTop.add(pendingLabel);
+        pendingTop.add(reloadPendingBtn);
+
+        pendingPanel.add(pendingTop, BorderLayout.NORTH);
+        pendingPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
+        reloadPendingBtn.addActionListener(e -> loadPendingBooks());
+
+        return pendingPanel;
     }
 
-    // ----------------- LOAD DATA -----------------
+    // --- TAB 4: Lịch sử ---
+    private JPanel buildHistoryPanel() {
+        JPanel historyPanel = new JPanel(new BorderLayout());
+        historyPanel.setBackground(BACKGROUND_LIGHT);
+        historyPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[]{"Tên sách", "Tác giả", "Thể loại", "Ngày mượn", "Ngày trả", "Trạng thái"}, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        styleTable(table);
+
+        JPanel historyTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        historyTop.setBackground(BACKGROUND_LIGHT);
+        historyTop.setBorder(new EmptyBorder(0, 0, 10, 0));
+        
+        JButton reloadHistoryBtn = new JButton("⟳ Tải lại");
+        styleButton(reloadHistoryBtn, PRIMARY_BLUE);
+        
+        JLabel historyLabel = new JLabel("📜 Lịch sử giao dịch mượn sách:");
+        historyLabel.setFont(LABEL_FONT);
+        
+        historyTop.add(historyLabel);
+        historyTop.add(reloadHistoryBtn);
+
+        historyPanel.add(historyTop, BorderLayout.NORTH);
+        historyPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
+        reloadHistoryBtn.addActionListener(e -> loadHistory());
+
+        return historyPanel;
+    }
+
+
+    // ----------------- LOAD DATA (Giữ nguyên logic) -----------------
     private void loadAllBooks() {
         try {
             connection.sendMessage("LIST_BOOKS");
@@ -225,7 +385,7 @@ public class MainUI extends JFrame {
         }
     }
 
-    // ----------------- UPDATE TABLE -----------------
+    // ----------------- UPDATE TABLE (Giữ nguyên logic) -----------------
     private void updateAllBooksTable(String resp) {
         allBooksModel.setRowCount(0);
         books.clear();
@@ -268,8 +428,8 @@ public class MainUI extends JFrame {
             if (info.length >= 5) {
                 String title = info[0];
                 String[] bookInfo = books.getOrDefault(title, new String[]{"", ""});
-                String requestDate = info[3];
-                String dueDate = info[4];
+                String requestDate = formatDate(info[3]);
+                String dueDate = formatDate(info[4]);
                 pendingModel.addRow(new Object[]{title, bookInfo[0], bookInfo[1], requestDate, dueDate});
             }
         }
@@ -303,24 +463,42 @@ public class MainUI extends JFrame {
         }
     }
 
-    // ----------------- ACTIONS -----------------
+    // ----------------- ACTIONS (Giữ nguyên logic) -----------------
     private void borrowBook() {
-        int row = allBooksTable.getSelectedRow();
+        // Tái tạo lại tham chiếu đến allBooksTable và allBooksModel
+        // do chúng ta đã thay đổi cách khởi tạo trong constructor
+        JTable currentAllBooksTable = (JTable) ((JScrollPane) ((JPanel) ((JTabbedPane) getContentPane().getComponent(0)).getComponentAt(0)).getComponent(1)).getViewport().getView();
+        
+        int row = currentAllBooksTable.getSelectedRow();
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "⚠️ Vui lòng chọn sách để mượn.");
             return;
         }
-        String title = (String) allBooksTable.getValueAt(row, 0);
+        String title = (String) currentAllBooksTable.getValueAt(row, 0);
 
         // ---------------- Chọn ngày trả sách với JSpinner ----------------
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), new Date(), null, Calendar.DAY_OF_MONTH);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // Đảm bảo ngày trả >= ngày hiện tại
+        Date minDate = calendar.getTime();
+        
+        // Thiết lập ngày mặc định (ví dụ: sau 7 ngày)
+        calendar.add(Calendar.DAY_OF_MONTH, 6); 
+        Date defaultDate = calendar.getTime();
+
+        SpinnerDateModel dateModel = new SpinnerDateModel(defaultDate, minDate, null, Calendar.DAY_OF_MONTH);
         JSpinner dateSpinner = new JSpinner(dateModel);
         dateSpinner.setEditor(new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd"));
+        
+        // Thêm tiêu đề cho hộp thoại
+        JPanel datePanel = new JPanel(new BorderLayout(10, 10));
+        datePanel.add(new JLabel("Chọn ngày bạn dự kiến trả sách (sau hôm nay):", JLabel.CENTER), BorderLayout.NORTH);
+        datePanel.add(dateSpinner, BorderLayout.CENTER);
+
 
         int option = JOptionPane.showOptionDialog(
                 this,
-                dateSpinner,
-                "Chọn ngày trả sách",
+                datePanel,
+                "📗 MƯỢN SÁCH: " + title,
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE,
                 null,
@@ -354,12 +532,26 @@ public class MainUI extends JFrame {
     }
 
     private void returnBook() {
-        int row = myBooksTable.getSelectedRow();
+        // Tái tạo lại tham chiếu đến myBooksTable
+        JTable currentMyBooksTable = (JTable) ((JScrollPane) ((JPanel) ((JTabbedPane) getContentPane().getComponent(0)).getComponentAt(1)).getComponent(1)).getViewport().getView();
+        
+        int row = currentMyBooksTable.getSelectedRow();
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "⚠️ Vui lòng chọn sách để trả.");
             return;
         }
-        String title = (String) myBooksTable.getValueAt(row, 0);
+        String title = (String) currentMyBooksTable.getValueAt(row, 0);
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Bạn có chắc chắn muốn trả sách: " + title + "?", 
+            "Xác nhận trả sách", 
+            JOptionPane.YES_NO_OPTION, 
+            JOptionPane.QUESTION_MESSAGE);
+            
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
 
         try {
             connection.sendMessage("RETURN " + username + "|" + title);

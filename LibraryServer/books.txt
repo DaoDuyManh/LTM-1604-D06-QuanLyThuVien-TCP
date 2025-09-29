@@ -1,9 +1,9 @@
-Homo Deus|Yuval Noah Harari|Future Studies|7|a|
-The Great Adventure|John Smith|Adventure|8|user01|
+Homo Deus|Yuval Noah Harari|Future Studies|7||
+The Great Adventure|John Smith|Adventure|8||
 Design Patterns|Erich Gamma|Programming|7||
 The Silent Patient|Alex Michaelides|Thriller|7||
-Becoming|Michelle Obama|Biography|9||
-Digital Marketing|Kevin Lee|Business|3||
+Becoming|Michelle Obama|Biography|9|a|
+Digital Marketing|Kevin Lee|Business|3|a|
 Mindfulness Guide|Sophia Kim|Self-Help|5||
 The Intelligent Investor|Benjamin Graham|Finance|6||
 Fantasy Worlds|Emma Wilson|Fantasy|9||
