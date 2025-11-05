@@ -100,6 +100,9 @@ public class MainUI extends JFrame {
         // Các nút đã được gán sự kiện trong các phương thức build*Panel
 
         setVisible(true);
+
+        // Không dùng broadcast nữa: bật auto-polling định kỳ để luôn cập nhật
+        startAutoPolling();
     }
     
     // --- UTILITY: Tạo Style cho Bảng (Cải tiến hàm gốc) ---
@@ -176,18 +179,15 @@ public class MainUI extends JFrame {
         searchField.setPreferredSize(new Dimension(300, 35));
         
         JButton searchBtn = new JButton("🔍 Tìm sách");
-        JButton reloadBtn = new JButton("⟳ Tải lại");
         
         styleButton(searchBtn, PRIMARY_BLUE);
-        styleButton(reloadBtn, new Color(108, 117, 125)); // Màu xám
 
         JLabel searchLabel = new JLabel("Tìm kiếm:");
         searchLabel.setFont(LABEL_FONT);
         
         searchPane.add(searchLabel);
         searchPane.add(searchField);
-        searchPane.add(searchBtn);
-        searchPane.add(reloadBtn);
+    searchPane.add(searchBtn);
 
         allPanel.add(searchPane, BorderLayout.NORTH);
         allPanel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -202,7 +202,6 @@ public class MainUI extends JFrame {
         allPanel.add(actionPanel, BorderLayout.SOUTH);
 
         // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
-        reloadBtn.addActionListener(e -> loadAllBooks());
         searchBtn.addActionListener(e -> {
             String key = searchField.getText().trim();
             if (key.isEmpty()) loadAllBooks();
@@ -232,14 +231,13 @@ public class MainUI extends JFrame {
         myTop.setBackground(BACKGROUND_LIGHT);
         myTop.setBorder(new EmptyBorder(0, 0, 10, 0));
         
-        JButton reloadMyBtn = new JButton("⟳ Tải lại");
-        styleButton(reloadMyBtn, PRIMARY_BLUE);
+    // remove manual reload button to rely on realtime updates
         
         JLabel myLabel = new JLabel("📖 Sách bạn đang mượn:");
         myLabel.setFont(LABEL_FONT);
         
         myTop.add(myLabel);
-        myTop.add(reloadMyBtn);
+    // no reload button
 
         myPanel.add(myTop, BorderLayout.NORTH);
         myPanel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -253,7 +251,6 @@ public class MainUI extends JFrame {
         myPanel.add(myActionPanel, BorderLayout.SOUTH);
         
         // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
-        reloadMyBtn.addActionListener(e -> loadMyBooks());
         returnBtn.addActionListener(e -> returnBook());
         
         return myPanel;
@@ -278,20 +275,19 @@ public class MainUI extends JFrame {
         pendingTop.setBackground(BACKGROUND_LIGHT);
         pendingTop.setBorder(new EmptyBorder(0, 0, 10, 0));
         
-        JButton reloadPendingBtn = new JButton("⟳ Tải lại");
-        styleButton(reloadPendingBtn, PRIMARY_BLUE);
+    // remove manual reload button to rely on realtime updates
         
         JLabel pendingLabel = new JLabel("📑 Sách đang chờ admin duyệt:");
         pendingLabel.setFont(LABEL_FONT);
         
         pendingTop.add(pendingLabel);
-        pendingTop.add(reloadPendingBtn);
+    // no reload button
 
         pendingPanel.add(pendingTop, BorderLayout.NORTH);
         pendingPanel.add(new JScrollPane(table), BorderLayout.CENTER);
         
         // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
-        reloadPendingBtn.addActionListener(e -> loadPendingBooks());
+    // no reload action
 
         return pendingPanel;
     }
@@ -315,20 +311,19 @@ public class MainUI extends JFrame {
         historyTop.setBackground(BACKGROUND_LIGHT);
         historyTop.setBorder(new EmptyBorder(0, 0, 10, 0));
         
-        JButton reloadHistoryBtn = new JButton("⟳ Tải lại");
-        styleButton(reloadHistoryBtn, PRIMARY_BLUE);
+    // remove manual reload button to rely on realtime updates
         
         JLabel historyLabel = new JLabel("📜 Lịch sử giao dịch mượn sách:");
         historyLabel.setFont(LABEL_FONT);
         
         historyTop.add(historyLabel);
-        historyTop.add(reloadHistoryBtn);
+    // no reload button
 
         historyPanel.add(historyTop, BorderLayout.NORTH);
         historyPanel.add(new JScrollPane(table), BorderLayout.CENTER);
         
         // ---------------- Sự kiện nút (Giữ nguyên logic) ----------------
-        reloadHistoryBtn.addActionListener(e -> loadHistory());
+    // no reload action
 
         return historyPanel;
     }
@@ -343,6 +338,45 @@ public class MainUI extends JFrame {
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "⚠️ Lỗi tải danh sách sách!");
         }
+    }
+
+    // ----------------- AUTO POLLING (không dùng broadcast) -----------------
+    private javax.swing.Timer pollTimer;
+    private volatile boolean polling = false;
+    private void startAutoPolling() {
+        pollTimer = new javax.swing.Timer(2000, e -> {
+            if (polling) return;
+            polling = true;
+            new Thread(() -> {
+                try {
+                    // Gọi server để lấy dữ liệu mới nhất
+                    connection.sendMessage("LIST_BOOKS");
+                    String listResp = connection.readResponse();
+
+                    connection.sendMessage("MYBOOKS " + username);
+                    String myResp = connection.readResponse();
+
+                    connection.sendMessage("PENDING " + username);
+                    String pendResp = connection.readResponse();
+
+                    connection.sendMessage("HISTORY " + username);
+                    String histResp = connection.readResponse();
+
+                    // Cập nhật UI trên EDT
+                    SwingUtilities.invokeLater(() -> {
+                        updateAllBooksTable(listResp);
+                        updateMyBooksTable(myResp);
+                        updatePendingTable(pendResp);
+                        updateHistoryTable(histResp);
+                    });
+                } catch (IOException ignored) {
+                } finally {
+                    polling = false;
+                }
+            }, "MainUI-Poller").start();
+        });
+        pollTimer.setRepeats(true);
+        pollTimer.start();
     }
 
     private void searchBooks(String keyword) {
@@ -523,11 +557,6 @@ public class MainUI extends JFrame {
             }
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "❌ Lỗi kết nối tới server!");
-        } finally {
-            loadAllBooks();
-            loadMyBooks();
-            loadPendingBooks();
-            loadHistory();
         }
     }
 
@@ -563,11 +592,6 @@ public class MainUI extends JFrame {
             }
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "❌ Lỗi kết nối tới server!");
-        } finally {
-            loadAllBooks();
-            loadMyBooks();
-            loadPendingBooks();
-            loadHistory();
         }
     }
 }

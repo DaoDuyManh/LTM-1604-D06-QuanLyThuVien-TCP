@@ -71,6 +71,10 @@ public class CommandProcessor {
         }
     }
 
+    /**
+     * Ghi file books -> giữ synchronized để tránh race khi nhiều thread gọi.
+     * Không broadcast ở đây (caller sẽ decide khi cần broadcast).
+     */
     private synchronized void saveBooks() {
         try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(BOOK_FILE),
                 StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
@@ -81,6 +85,21 @@ public class CommandProcessor {
         } catch (IOException e) {
             System.out.println("❌ Lỗi save books: " + e.getMessage());
         }
+    }
+
+    // -------------------- UTIL --------------------
+    /**
+     * Tìm sách theo title không phân biệt hoa thường (an toàn hơn so với books.get(title)).
+     */
+    private Book findBookByTitle(String title) {
+        if (title == null) return null;
+        Book b = books.get(title);
+        if (b != null) return b;
+        String t = title.trim();
+        for (Book book : books.values()) {
+            if (book.getTitle().equalsIgnoreCase(t)) return book;
+        }
+        return null;
     }
 
     // -------------------- PROCESS --------------------
@@ -140,7 +159,6 @@ public class CommandProcessor {
                 String arg = input.replaceFirst("RETURN[: ]", "").trim();
                 if (arg.isEmpty()) return "ERROR|Sai cú pháp RETURN";
 
-                // Lấy user và title từ lệnh client
                 String[] parts = arg.split("\\|", -1);
                 if (parts.length < 2) return "ERROR|Thiếu thông tin user hoặc sách";
                 String user = parts[0].trim();
@@ -152,6 +170,15 @@ public class CommandProcessor {
             if (input.startsWith("HISTORY")) {
                 String arg = input.replaceFirst("HISTORY[: ]", "").trim();
                 return arg.isEmpty() ? handleHistory(currentUser) : handleHistory(arg);
+            }
+
+            // --- SYNC/BROADCAST (phục vụ AdminUI khi chỉnh file trực tiếp) ---
+            if (input.equals("SYNC_ALL")) {
+                loadBooks();
+                loadAccounts();
+                safeBroadcast("UPDATE_BOOKS|ALL");
+                safeBroadcast("UPDATE_PENDING|ALL");
+                return "OK";
             }
 
         } catch (Exception e) {
@@ -242,7 +269,7 @@ public class CommandProcessor {
         for (String l : lines) {
             String[] arr = l.split("\\|", -1);
             if (arr.length >= 6 && arr[0].equals(user) && arr[1].equals(title) && arr[5].equals("BORROWED")) {
-                return arr[2]; // borrowDate
+                return arr[2];
             }
         }
         return "";
@@ -252,7 +279,7 @@ public class CommandProcessor {
         for (String l : lines) {
             String[] arr = l.split("\\|", -1);
             if (arr.length >= 6 && arr[0].equals(user) && arr[1].equals(title) && arr[5].equals("BORROWED")) {
-                return arr[3]; // dueDate
+                return arr[3];
             }
         }
         return "";
@@ -272,6 +299,11 @@ public class CommandProcessor {
                 Collections.singletonList(line),
                 StandardCharsets.UTF_8,
                 Files.exists(Paths.get(PENDING_FILE)) ? StandardOpenOption.APPEND : StandardOpenOption.CREATE);
+
+        // 🔔 Broadcast pending list cho user và admin (ALL)
+        safeBroadcast("UPDATE_PENDING|" + user);
+        safeBroadcast("UPDATE_PENDING|ALL");
+
         return "PENDING_OK|Đã gửi yêu cầu mượn";
     }
 
@@ -283,7 +315,7 @@ public class CommandProcessor {
         for (String l : lines) {
             String[] parts = l.split("\\|", -1);
             if (parts.length >= 5 && parts[0].trim().equals(user)) {
-                Book b = books.get(parts[1]);
+                Book b = findBookByTitle(parts[1]);
                 if (b != null) {
                     sb.append("|").append(b.getTitle()).append(",")
                       .append(b.getAuthor()).append(",")
@@ -304,7 +336,7 @@ public class CommandProcessor {
         for (String l : lines) {
             String[] parts = l.split("\\|", -1);
             if (parts.length >= 5) {
-                Book b = books.get(parts[1]);
+                Book b = findBookByTitle(parts[1]);
                 if (b != null) {
                     sb.append("|").append(parts[0]).append(",")
                       .append(b.getTitle()).append(",")
@@ -324,7 +356,7 @@ public class CommandProcessor {
         String user = parts[0].trim();
         String title = parts[1].trim();
 
-        Book b = books.get(title);
+        Book b = findBookByTitle(title);
         if (b == null) return "ERROR|Không tìm thấy sách";
         if (b.getAvailableCount() <= 0) return "ERROR|Không còn sách trống";
 
@@ -341,6 +373,7 @@ public class CommandProcessor {
             }
         }
 
+        // Cập nhật model sách (Book.addBorrower nên xử lý count nếu cần)
         b.addBorrower(user);
         saveBooks();
 
@@ -352,6 +385,12 @@ public class CommandProcessor {
                 Files.exists(Paths.get(BORROW_HISTORY_FILE)) ? StandardOpenOption.APPEND : StandardOpenOption.CREATE);
 
         removePending(user, title);
+
+    // 🔔 Broadcast cập nhật sách và pending
+    safeBroadcast("UPDATE_BOOKS|" + title);
+    safeBroadcast("UPDATE_PENDING|" + user);
+    safeBroadcast("UPDATE_PENDING|ALL");
+
         return "SUCCESS|Đã duyệt mượn";
     }
 
@@ -361,6 +400,11 @@ public class CommandProcessor {
         String user = parts[0].trim();
         String title = parts[1].trim();
         removePending(user, title);
+
+        // 🔔 Broadcast cập nhật pending
+        safeBroadcast("UPDATE_PENDING|" + user);
+        safeBroadcast("UPDATE_PENDING|ALL");
+
         return "SUCCESS|Đã từ chối yêu cầu";
     }
 
@@ -386,7 +430,7 @@ public class CommandProcessor {
 
         String returnDate = LocalDateTime.now().format(ISO_FMT);
 
-        Book b = books.get(title);
+        Book b = findBookByTitle(title);
         if (b == null) return "ERROR|Không tìm thấy sách";
         if (!b.getBorrowers().removeIf(u -> u.equalsIgnoreCase(user))) {
             return "ERROR|Bạn chưa mượn sách này";
@@ -418,6 +462,9 @@ public class CommandProcessor {
         Files.write(p, updated, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
+        // 🔔 Broadcast cập nhật sách
+        safeBroadcast("UPDATE_BOOKS|" + title);
+
         return "SUCCESS|Trả sách thành công";
     }
 
@@ -430,7 +477,7 @@ public class CommandProcessor {
         for (String l : lines) {
             String[] parts = l.split("\\|", -1);
             if (parts.length >= 6 && parts[0].trim().equals(user)) {
-                Book b = books.get(parts[1]);
+                Book b = findBookByTitle(parts[1]);
                 if (b != null) {
                     sb.append("|").append(b.getTitle()).append(",")
                       .append(b.getAuthor()).append(",")
@@ -443,5 +490,16 @@ public class CommandProcessor {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Gọi LibraryServer.broadcast an toàn (bắt exception để server không crash)
+     */
+    private void safeBroadcast(String msg) {
+        try {
+            LibraryServer.broadcast(msg);
+        } catch (Exception e) {
+            System.out.println("⚠️ Broadcast thất bại cho msg=" + msg + " vì: " + e.getMessage());
+        }
     }
 }

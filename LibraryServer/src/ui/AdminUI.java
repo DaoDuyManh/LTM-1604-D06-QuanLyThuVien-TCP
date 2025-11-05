@@ -3,39 +3,50 @@ package ui;
 import model.Book;
 import model.User;
 import server.CommandProcessor;
-import util.Config;
+// import util.Config; // vẫn dùng cho SERVER_PORT ở startServer()
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.time.format.DateTimeFormatter;
+// import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class AdminUI extends JFrame {
     private JTabbedPane tabbedPane;
-    private JTable userTable, bookTable, pendingTable, historyTable;
-    private DefaultTableModel userModel, bookModel, pendingModel, historyModel;
+    private JTable userTable, bookTable, pendingTable;
+    private DefaultTableModel userModel, bookModel, pendingModel;
+    
+    // Borrow History - 3 bảng riêng
+    private JTable borrowingUsersTable;
+    private DefaultTableModel borrowingUsersModel;
+    private JTable currentBorrowsTable;
+    private DefaultTableModel currentBorrowsModel;
+    private JTable returnedBooksTable;
+    private DefaultTableModel returnedBooksModel;
     private static JTextArea logArea;
 
     private static final String BOOK_FILE = "books.txt";
     private static final String ACCOUNT_FILE = "accounts.txt";
     private static final String PENDING_FILE = "pending.txt";
     private static final String BORROW_HISTORY_FILE = "borrow_history.txt";
-    private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    // private static final String SERVER_HOST = "localhost"; // host của LibraryServer (không dùng)
 
+    private CommandProcessor processor;
+
+    // Server nội bộ (theo yêu cầu): Start/Stop trực tiếp trong AdminUI
     private ServerSocket serverSocket;
     private Thread serverThread;
-    private CommandProcessor processor;
 
  // 🎨 Light Theme - CÁC HẰNG SỐ MÀU
     private static final Color BACKGROUND_LIGHT   = Color.WHITE;              
@@ -47,7 +58,7 @@ public class AdminUI extends JFrame {
     private static final Color GRID_COLOR_LIGHT = new Color(220, 220, 220); // Màu kẻ mờ
 
     // Nút Accent
-    private static final Color BUTTON_PRIMARY = new Color(52, 152, 219);  
+    // private static final Color BUTTON_PRIMARY = new Color(52, 152, 219);  
     private static final Color BUTTON_SUCCESS = new Color(46, 204, 113); 
     private static final Color BUTTON_DANGER  = new Color(231, 76, 60);  
     private static final Color BUTTON_CONTROL_FG = new Color(33, 37, 41); 
@@ -78,6 +89,9 @@ public class AdminUI extends JFrame {
         loadBooks();
         loadPendingRequests();
         loadBorrowHistory();
+
+        // Bật cơ chế auto-refresh định kỳ (không dùng broadcast)
+        startAutoRefresh();
     }
     
     // --- Phương thức Helper để tùy chỉnh Bảng (Đã hoàn thiện) ---
@@ -189,11 +203,11 @@ public class AdminUI extends JFrame {
         tabbedPane.addTab("⏳ Pending Requests", buildPendingPanel());
         tabbedPane.addTab("📜 Borrow History", buildHistoryPanel());
 
-        JPanel serverPanel = new JPanel(new BorderLayout());
-        serverPanel.setBackground(BACKGROUND_LIGHT);
-        serverPanel.add(buildLogPanel(), BorderLayout.CENTER);
-        serverPanel.add(buildServerControlPanel(), BorderLayout.SOUTH);
-        tabbedPane.addTab("⚙️ Server Log", serverPanel);
+    JPanel serverPanel = new JPanel(new BorderLayout());
+    serverPanel.setBackground(BACKGROUND_LIGHT);
+    serverPanel.add(buildLogPanel(), BorderLayout.CENTER);
+    serverPanel.add(buildServerControlPanel(), BorderLayout.SOUTH);
+    tabbedPane.addTab("⚙️ Server Log", serverPanel);
 
         add(tabbedPane);
     }
@@ -218,20 +232,18 @@ public class AdminUI extends JFrame {
         control.setBackground(BACKGROUND_CONTROL);
         control.setBorder(new EmptyBorder(10, 10, 10, 10));
         
-        JButton add = new JButton("➕ Thêm User");
-        JButton del = new JButton("🗑️ Xóa User");
-        JButton reload = new JButton("⟳ Tải lại");
+    JButton add = new JButton("➕ Thêm User");
+    JButton del = new JButton("🗑️ Xóa User");
         
-        customizeButton(add, BACKGROUND_CONTROL, BUTTON_SUCCESS.darker()); 
-        customizeButton(del, BACKGROUND_CONTROL, BUTTON_DANGER.darker()); 
-        customizeButton(reload); 
+    customizeButton(add, BACKGROUND_CONTROL, BUTTON_SUCCESS.darker()); 
+    customizeButton(del, BACKGROUND_CONTROL, BUTTON_DANGER.darker()); 
 
         
-        control.add(add); control.add(del); control.add(reload);
+    control.add(add); control.add(del);
 
         add.addActionListener(e -> addUser());
         del.addActionListener(e -> deleteUser());
-        reload.addActionListener(e -> loadUsers());
+    // bỏ nút tải lại, cập nhật tự động qua broadcast
 
         panel.add(tableWrapper, BorderLayout.CENTER); // Thêm wrapper panel
         panel.add(control, BorderLayout.SOUTH);
@@ -328,25 +340,23 @@ public class AdminUI extends JFrame {
         control.setBackground(BACKGROUND_CONTROL);
         control.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JButton btnAdd = new JButton("➕ Thêm sách");
-        JButton btnDelete = new JButton("🗑️ Xóa sách");
-        JButton btnEditQty = new JButton("✍️ Chỉnh số lượng");
-        JButton btnForceReturn = new JButton("⚠️ Force Return");
-        JButton btnReload = new JButton("⟳ Tải lại");
+    JButton btnAdd = new JButton("➕ Thêm sách");
+    JButton btnDelete = new JButton("🗑️ Xóa sách");
+    JButton btnEditQty = new JButton("✍️ Chỉnh số lượng");
+    JButton btnImport = new JButton("⬇️ Import");
         
         customizeButton(btnAdd, BUTTON_SUCCESS, Color.WHITE); 
         customizeButton(btnDelete, BUTTON_DANGER, Color.WHITE); 
-        customizeButton(btnEditQty); 
-        customizeButton(btnForceReturn, new Color(255, 193, 7), FOREGROUND_DARK); 
-        customizeButton(btnReload); 
+    customizeButton(btnEditQty); 
+    customizeButton(btnImport, new Color(52, 152, 219), Color.WHITE); 
         
-        control.add(btnAdd); control.add(btnDelete); control.add(btnEditQty); control.add(btnForceReturn); control.add(btnReload);
+        
+    control.add(btnAdd); control.add(btnDelete); control.add(btnEditQty); control.add(btnImport);
 
         btnAdd.addActionListener(e -> addBook());
         btnDelete.addActionListener(e -> deleteBook());
         btnEditQty.addActionListener(e -> editQuantity());
-        btnForceReturn.addActionListener(e -> forceReturn());
-        btnReload.addActionListener(e -> loadBooks());
+    btnImport.addActionListener(e -> importBooks());
 
         panel.add(tableWrapper, BorderLayout.CENTER); // Thêm wrapper panel
         panel.add(control, BorderLayout.SOUTH);
@@ -393,6 +403,7 @@ public class AdminUI extends JFrame {
                 if(ex.isPresent()){ JOptionPane.showMessageDialog(this,"Sách đã tồn tại!"); return; }
                 all.add(b);
                 writeAllBooks(all);
+                // Không dùng broadcast/SYNC_ALL nữa
                 loadBooks();
             }catch(NumberFormatException ex){ JOptionPane.showMessageDialog(this,"Số lượng không hợp lệ"); }
             catch(IOException ex){ appendLog("❌ Lỗi thao tác file: " + ex.getMessage()); }
@@ -408,6 +419,7 @@ public class AdminUI extends JFrame {
                 List<Book> all=readAllBooks();
                 all=all.stream().filter(b->!b.getTitle().equalsIgnoreCase(t)).collect(Collectors.toList());
                 writeAllBooks(all);
+                // Không dùng broadcast/SYNC_ALL nữa
                 loadBooks();
             }catch(IOException ex){ appendLog("❌ Lỗi thao tác file: "+ex.getMessage()); }
         }
@@ -423,24 +435,103 @@ public class AdminUI extends JFrame {
             List<Book> all=readAllBooks();
             all.forEach(b->{ if(b.getTitle().equalsIgnoreCase(t)) b.setQuantity(qty); }); 
             writeAllBooks(all);
+            // Không dùng broadcast/SYNC_ALL nữa
             loadBooks();
         }catch(NumberFormatException ex){ JOptionPane.showMessageDialog(this,"Số lượng không hợp lệ"); }
             catch(IOException ex){ appendLog("❌ Lỗi thao tác file: " + ex.getMessage()); }
     }
 
-    private void forceReturn(){
-        int row=bookTable.getSelectedRow(); if(row<0) return;
-        String t=(String)bookModel.getValueAt(row,0);
-        int c=JOptionPane.showConfirmDialog(this,"FORCE RETURN: Xóa toàn bộ người mượn sách '"+t+"' ?\n(Chỉ dùng khi cần thiết)", "Cảnh báo", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
-        if(c==JOptionPane.YES_OPTION){
-            try{
-                List<Book> all=readAllBooks();
-                all.forEach(b->{ if(b.getTitle().equalsIgnoreCase(t)) b.getBorrowers().clear(); });
-                writeAllBooks(all);
-                loadBooks();
-            }catch(IOException ex){ appendLog("❌ Lỗi thao tác file: " + ex.getMessage()); }
+    private void importBooks(){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn file import (CSV hoặc TXT)");
+        chooser.setFileFilter(new FileNameExtensionFilter("CSV/TXT files", "csv", "txt"));
+        int r = chooser.showOpenDialog(this);
+        if (r != JFileChooser.APPROVE_OPTION) return;
+
+        File file = chooser.getSelectedFile();
+        int total = 0, added = 0, updated = 0, skipped = 0;
+        try {
+            List<Book> all = readAllBooks();
+            Map<String, Book> byTitle = new HashMap<>();
+            for (Book b : all) byTitle.put(b.getTitle().toLowerCase(), b);
+
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    total++;
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) { skipped++; continue; }
+
+                    String lower = line.toLowerCase();
+                    // Bỏ qua dòng header phổ biến
+                    if (lower.contains("title") || lower.contains("tên") && lower.contains("tác giả")) { skipped++; continue; }
+
+                    String delim = line.contains("|") ? "\\|" : ",";
+                    String[] parts = line.split(delim, -1);
+
+                    String title = "";
+                    String author = "";
+                    String category = "";
+                    int qty = 1;
+                    try {
+                        if (parts.length >= 4) {
+                            title = parts[0].trim();
+                            author = parts[1].trim();
+                            category = parts[2].trim();
+                            qty = parseIntSafe(parts[3].trim(), 1);
+                        } else if (parts.length == 3) {
+                            title = parts[0].trim();
+                            author = parts[1].trim();
+                            category = parts[2].trim();
+                        } else if (parts.length == 2) {
+                            title = parts[0].trim();
+                            if (isNumeric(parts[1].trim())) qty = Integer.parseInt(parts[1].trim());
+                            else author = parts[1].trim();
+                        } else if (parts.length == 1) {
+                            title = parts[0].trim();
+                        }
+                    } catch (Exception ex) {
+                        skipped++;
+                        continue;
+                    }
+
+                    if (title.isEmpty()) { skipped++; continue; }
+                    if (qty <= 0) qty = 1;
+
+                    Book exist = byTitle.get(title.toLowerCase());
+                    if (exist != null) {
+                        exist.setQuantity(exist.getQuantity() + qty);
+                        updated++;
+                    } else {
+                        Book nb = new Book(title, author, category, qty, new ArrayList<>());
+                        all.add(nb);
+                        byTitle.put(title.toLowerCase(), nb);
+                        added++;
+                    }
+                }
+            }
+
+            writeAllBooks(all);
+            loadBooks();
+            JOptionPane.showMessageDialog(this, String.format(
+                "Import hoàn tất.\nTổng dòng: %d\nThêm mới: %d\nCập nhật số lượng: %d\nBỏ qua: %d",
+                total, added, updated, skipped
+            ));
+        } catch (IOException ex) {
+            appendLog("❌ Lỗi import: " + ex.getMessage());
+            JOptionPane.showMessageDialog(this, "Lỗi import: " + ex.getMessage());
         }
     }
+
+    private int parseIntSafe(String s, int def) {
+        try { return Integer.parseInt(s); } catch (Exception e) { return def; }
+    }
+
+    private boolean isNumeric(String s) {
+        try { Integer.parseInt(s); return true; } catch (Exception e) { return false; }
+    }
+
+    // Force Return chức năng cũ đã gỡ bỏ theo yêu cầu; thay bằng Import sách
 
     private List<Book> readAllBooks() throws IOException{
         Path p=Paths.get(BOOK_FILE);
@@ -478,17 +569,15 @@ public class AdminUI extends JFrame {
         control.setBackground(BACKGROUND_CONTROL);
         control.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JButton btnAccept = new JButton("✔ Chấp nhận");
-        JButton btnReject = new JButton("✖ Từ chối");
-        JButton btnReload = new JButton("⟳ Tải lại");
+    JButton btnAccept = new JButton("✔ Chấp nhận");
+    JButton btnReject = new JButton("✖ Từ chối");
         
         customizeButton(btnAccept, BUTTON_SUCCESS, Color.WHITE); 
-        customizeButton(btnReject, BUTTON_DANGER, Color.WHITE); 
-        customizeButton(btnReload);
+    customizeButton(btnReject, BUTTON_DANGER, Color.WHITE); 
         
-        control.add(btnAccept); control.add(btnReject); control.add(btnReload);
+    control.add(btnAccept); control.add(btnReject);
 
-        btnReload.addActionListener(e->loadPendingRequests());
+    // bỏ nút tải lại, rely on broadcast
 
         btnAccept.addActionListener(e->{
             int row = pendingTable.getSelectedRow();
@@ -498,6 +587,7 @@ public class AdminUI extends JFrame {
             String cmd = "ACCEPT_BORROW:" + user + ":" + book;
             String resp = processor.process(cmd, "admin");
             JOptionPane.showMessageDialog(this, resp);
+            // tự refresh tại chỗ
             loadPendingRequests();
             loadBooks();
             loadBorrowHistory();
@@ -544,78 +634,210 @@ public class AdminUI extends JFrame {
 
  // -------------------- Borrow History --------------------
     private JPanel buildHistoryPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(BACKGROUND_LIGHT);
-        
-        historyModel = new DefaultTableModel(new String[]{"User","Book","Borrow Date","Return Date","Status"},0);
-        historyTable = new JTable(historyModel);
-        customizeTable(historyTable);
-        
-        // Áp dụng wrapper panel và padding cho bảng History
-        JPanel tableWrapper = new JPanel(new BorderLayout());
-        tableWrapper.setBorder(new EmptyBorder(10, 10, 10, 10)); // Padding 10px
-        JScrollPane scroll = new JScrollPane(historyTable);
-        scroll.getViewport().setBackground(BACKGROUND_LIGHT);
-        tableWrapper.add(scroll, BorderLayout.CENTER);
-        
-        
-        JPanel control = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
-        control.setBackground(BACKGROUND_CONTROL);
-        control.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(BACKGROUND_LIGHT);
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JButton reload = new JButton("⟳ Tải lại"); 
-        customizeButton(reload);
-        reload.addActionListener(e->loadBorrowHistory());
+        // === BẢNG TRÊN: Danh sách Users đang mượn sách ===
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BACKGROUND_LIGHT);
         
-        control.add(reload);
-        panel.add(tableWrapper, BorderLayout.CENTER); // Thêm wrapper panel
-        panel.add(control, BorderLayout.SOUTH);
-        return panel;
+        JLabel topLabel = new JLabel("👥 Users đang mượn sách");
+        topLabel.setFont(HEADER_FONT.deriveFont(16f));
+        topLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
+        topPanel.add(topLabel, BorderLayout.NORTH);
+        
+        borrowingUsersModel = new DefaultTableModel(new String[]{"Username", "Số sách đang mượn"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        borrowingUsersTable = new JTable(borrowingUsersModel);
+        customizeTable(borrowingUsersTable);
+        borrowingUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        JScrollPane usersScroll = new JScrollPane(borrowingUsersTable);
+        usersScroll.getViewport().setBackground(BACKGROUND_LIGHT);
+        usersScroll.setPreferredSize(new Dimension(0, 200));
+        topPanel.add(usersScroll, BorderLayout.CENTER);
+
+        // === BẢNG DƯỚI: Chi tiết sách của user được chọn ===
+        JPanel bottomPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+        bottomPanel.setBackground(BACKGROUND_LIGHT);
+
+        // Bảng 1: Sách đang mượn
+        JPanel borrowingPanel = new JPanel(new BorderLayout());
+        borrowingPanel.setBackground(BACKGROUND_LIGHT);
+        
+        JLabel borrowingLabel = new JLabel("📚 Sách đang mượn");
+        borrowingLabel.setFont(HEADER_FONT.deriveFont(15f));
+        borrowingLabel.setBorder(new EmptyBorder(0, 0, 5, 0));
+        borrowingPanel.add(borrowingLabel, BorderLayout.NORTH);
+        
+        currentBorrowsModel = new DefaultTableModel(new String[]{"Tên sách", "Ngày mượn", "Ngày phải trả"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        currentBorrowsTable = new JTable(currentBorrowsModel);
+        customizeTable(currentBorrowsTable);
+        
+        JScrollPane borrowingScroll = new JScrollPane(currentBorrowsTable);
+        borrowingScroll.getViewport().setBackground(BACKGROUND_LIGHT);
+        borrowingPanel.add(borrowingScroll, BorderLayout.CENTER);
+
+        // Bảng 2: Sách đã trả
+        JPanel returnedPanel = new JPanel(new BorderLayout());
+        returnedPanel.setBackground(BACKGROUND_LIGHT);
+        
+        JLabel returnedLabel = new JLabel("✅ Sách đã trả");
+        returnedLabel.setFont(HEADER_FONT.deriveFont(15f));
+        returnedLabel.setBorder(new EmptyBorder(0, 0, 5, 0));
+        returnedPanel.add(returnedLabel, BorderLayout.NORTH);
+        
+        returnedBooksModel = new DefaultTableModel(new String[]{"Tên sách", "Ngày mượn", "Ngày phải trả", "Ngày trả"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        returnedBooksTable = new JTable(returnedBooksModel);
+        customizeTable(returnedBooksTable);
+        
+        JScrollPane returnedScroll = new JScrollPane(returnedBooksTable);
+        returnedScroll.getViewport().setBackground(BACKGROUND_LIGHT);
+        returnedPanel.add(returnedScroll, BorderLayout.CENTER);
+
+        bottomPanel.add(borrowingPanel);
+        bottomPanel.add(returnedPanel);
+
+        // === LISTENER: Khi click vào user, load chi tiết sách ===
+        borrowingUsersTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = borrowingUsersTable.getSelectedRow();
+                if (row >= 0) {
+                    String username = (String) borrowingUsersModel.getValueAt(row, 0);
+                    loadUserBookDetails(username);
+                }
+            }
+        });
+
+        // === LAYOUT CHÍNH ===
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel, bottomPanel);
+        splitPane.setResizeWeight(0.3);
+        splitPane.setDividerLocation(220);
+        splitPane.setBackground(BACKGROUND_LIGHT);
+        
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        return mainPanel;
     }
 
     private void loadBorrowHistory(){
-        SwingUtilities.invokeLater(()->{
-            historyModel.setRowCount(0);
-            Path p=Paths.get(BORROW_HISTORY_FILE);
-            if(!Files.exists(p)) return;
-            try{
-                for(String l:Files.readAllLines(p,StandardCharsets.UTF_8)){
-                    if(l.trim().isEmpty()) continue;
-                    // format cũ: user|title|borrowDate|returnDate|status (parts[5] là status)
+        SwingUtilities.invokeLater(() -> {
+            borrowingUsersModel.setRowCount(0);
+            currentBorrowsModel.setRowCount(0);
+            returnedBooksModel.setRowCount(0);
+            
+            Path p = Paths.get(BORROW_HISTORY_FILE);
+            if (!Files.exists(p)) return;
+            
+            try {
+                // Đọc tất cả records
+                List<String> lines = Files.readAllLines(p, StandardCharsets.UTF_8);
+                Map<String, Integer> borrowingUsers = new HashMap<>();
+                
+                for (String l : lines) {
+                    if (l.trim().isEmpty()) continue;
                     String[] parts = l.split("\\|", -1);
-                    if (parts.length >= 6) { 
+                    if (parts.length >= 6) {
                         String user = parts[0].trim();
-                        String title = parts[1].trim();
-                        String borrowDate = parts[2].trim();
-                        String returnDate = parts[3].trim(); 
-                        String status = parts[5].trim(); 
-                        historyModel.addRow(new Object[]{user, title, borrowDate, returnDate, status});
+                        String status = parts[5].trim();
+                        
+                        // Chỉ đếm những user có sách BORROWED
+                        if ("BORROWED".equalsIgnoreCase(status)) {
+                            borrowingUsers.put(user, borrowingUsers.getOrDefault(user, 0) + 1);
+                        }
                     }
                 }
-            }catch(IOException ex){ appendLog("❌ Lỗi đọc borrow history: "+ex.getMessage()); }
+                
+                // Hiển thị danh sách users đang mượn sách
+                borrowingUsers.forEach((user, count) -> {
+                    borrowingUsersModel.addRow(new Object[]{user, count});
+                });
+                
+                // Auto-select user đầu tiên nếu có
+                if (borrowingUsersModel.getRowCount() > 0) {
+                    borrowingUsersTable.setRowSelectionInterval(0, 0);
+                    String firstUser = (String) borrowingUsersModel.getValueAt(0, 0);
+                    loadUserBookDetails(firstUser);
+                }
+                
+            } catch (IOException ex) {
+                appendLog("❌ Lỗi đọc borrow history: " + ex.getMessage());
+            }
         });
+    }
+
+    private void loadUserBookDetails(String username) {
+        SwingUtilities.invokeLater(() -> {
+            currentBorrowsModel.setRowCount(0);
+            returnedBooksModel.setRowCount(0);
+            
+            Path p = Paths.get(BORROW_HISTORY_FILE);
+            if (!Files.exists(p)) return;
+            
+            try {
+                List<String> lines = Files.readAllLines(p, StandardCharsets.UTF_8);
+                
+                for (String l : lines) {
+                    if (l.trim().isEmpty()) continue;
+                    String[] parts = l.split("\\|", -1);
+                    if (parts.length >= 6) {
+                        String user = parts[0].trim();
+                        if (!user.equalsIgnoreCase(username)) continue;
+                        
+                        String title = parts[1].trim();
+                        String borrowDate = parts[2].trim();
+                        String dueDate = parts[3].trim();
+                        String returnDate = parts[4].trim();
+                        String status = parts[5].trim();
+                        
+                        // Định dạng ngày cho đẹp hơn
+                        String borrowDateFormatted = formatDate(borrowDate);
+                        String dueDateFormatted = formatDate(dueDate);
+                        String returnDateFormatted = formatDate(returnDate);
+                        
+                        if ("BORROWED".equalsIgnoreCase(status)) {
+                            // Sách đang mượn
+                            currentBorrowsModel.addRow(new Object[]{
+                                title, 
+                                borrowDateFormatted, 
+                                dueDateFormatted
+                            });
+                        } else if ("RETURNED".equalsIgnoreCase(status)) {
+                            // Sách đã trả
+                            returnedBooksModel.addRow(new Object[]{
+                                title, 
+                                borrowDateFormatted, 
+                                dueDateFormatted, 
+                                returnDateFormatted
+                            });
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                appendLog("❌ Lỗi đọc chi tiết user: " + ex.getMessage());
+            }
+        });
+    }
+
+    private String formatDate(String date) {
+        if (date == null || date.isEmpty()) return "";
+        // Nếu có timestamp ISO (yyyy-MM-ddTHH:mm:ss), chỉ lấy phần ngày
+        if (date.contains("T")) {
+            return date.split("T")[0];
+        }
+        return date;
     }
 
 
     // -------------------- Server --------------------
-    private JPanel buildServerControlPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
-        panel.setBackground(BACKGROUND_CONTROL);
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        JButton btnStart = new JButton("▶️ Start Server");
-        JButton btnStop = new JButton("⏹️ Stop Server");
-        
-        // Nút Start/Stop
-        customizeButton(btnStart, BUTTON_PRIMARY, Color.WHITE); 
-        customizeButton(btnStop, BUTTON_DANGER, Color.WHITE);
-        
-        btnStart.addActionListener(e->startServer());
-        btnStop.addActionListener(e->stopServer());
-        panel.add(btnStart); panel.add(btnStop);
-        return panel;
-    }
-
     private JScrollPane buildLogPanel() {
         logArea = new JTextArea();
         logArea.setEditable(false);
@@ -642,24 +864,41 @@ public class AdminUI extends JFrame {
             logArea.setCaretPosition(logArea.getDocument().getLength());
         });
     }
+    
+    private JPanel buildServerControlPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
+        panel.setBackground(BACKGROUND_CONTROL);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        
+        JButton btnStart = new JButton("▶️ Start Server");
+        JButton btnStop = new JButton("⏹️ Stop Server");
+        
+        // Nút Start/Stop
+        customizeButton(btnStart, new Color(52, 152, 219), Color.WHITE); 
+        customizeButton(btnStop, BUTTON_DANGER, Color.WHITE);
+        
+        btnStart.addActionListener(e->startServer());
+        btnStop.addActionListener(e->stopServer());
+        panel.add(btnStart); panel.add(btnStop);
+        return panel;
+    }
 
     private void startServer(){
         if(serverThread!=null && serverThread.isAlive()){ appendLog("⚠️ Server đang chạy"); return; }
         serverThread = new Thread(()->{
             try{
-                serverSocket=new ServerSocket(Config.SERVER_PORT);
-                appendLog("✅ Server started at port "+Config.SERVER_PORT);
+                serverSocket=new ServerSocket(util.Config.SERVER_PORT);
+                appendLog("✅ Server started at port "+ util.Config.SERVER_PORT);
                 while(!serverSocket.isClosed()){
                     Socket client=serverSocket.accept();
                     appendLog("🔗 Client connected: "+client.getInetAddress().getHostAddress());
                     new Thread(()->handleClient(client)).start();
                 }
             }catch(IOException e){ 
-                if(!e.getMessage().contains("socket closed")) { 
-                     appendLog("❌ Lỗi server: "+e.getMessage()); 
-                }
+                if(serverSocket!=null && serverSocket.isClosed()) return; 
+                appendLog("❌ Lỗi server: "+e.getMessage());
             }
-        });
+        }, "Admin-EmbeddedServer");
         serverThread.start();
     }
 
@@ -682,16 +921,38 @@ public class AdminUI extends JFrame {
                 appendLog("📤 Sent to "+client.getInetAddress().getHostAddress()+": "+resp);
             }
         }catch(IOException e){ 
-            if(!e.getMessage().contains("Connection reset")) {
-                 appendLog("⚠️ Client disconnected ("+client.getInetAddress().getHostAddress()+"): "+e.getMessage()); 
-            } else {
-                 appendLog("⚠️ Client forcibly closed connection ("+client.getInetAddress().getHostAddress()+")"); 
-            }
+            appendLog("⚠️ Client disconnected ("+client.getInetAddress().getHostAddress()+"): "+e.getMessage()); 
         }
     }
+
+    // -------------------- Auto refresh without broadcast --------------------
+    private javax.swing.Timer autoTimer;
+    private volatile boolean refreshing = false;
+    private void startAutoRefresh(){
+        autoTimer = new javax.swing.Timer(2000, e -> {
+            if (refreshing) return;
+            refreshing = true;
+            new Thread(() -> {
+                try {
+                    loadUsers();
+                    loadBooks();
+                    loadPendingRequests();
+                    loadBorrowHistory();
+                } finally {
+                    refreshing = false;
+                }
+            }, "Admin-AutoRefresh").start();
+        });
+        autoTimer.setRepeats(true);
+        autoTimer.start();
+    }
+
+    // (Đã loại bỏ phần Start/Stop server nội bộ để tránh chạy 2 server khác nhau)
 
     // -------------------- Main --------------------
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new AdminUI().setVisible(true));
     }
+
+    // (Không dùng broadcast nữa, bỏ push listener và gửi lệnh qua socket)
 }
