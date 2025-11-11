@@ -4,7 +4,7 @@
     </a>
 </h2>
 <h2 align="center">
-    MÔ HÌNH HỌC SÂU PHÁT HIỆN SÂU BỆNH TRÊN LÁ CÂY LÚA
+    QUẢN LÝ SÁCH - THƯ VIỆN QUA MẠNG BẰNG GIAO THỨC TCP/IP
 </h2>
 
 <div align="center">
